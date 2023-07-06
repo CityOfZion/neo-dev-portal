@@ -16,8 +16,8 @@ tool to compile Python scripts into NeoVM compatible code. The token will be com
 
 ### What is the NEP-17 Standard?
 
-The NEP-17 standard defines a set of rules that a token contract must follow to be considered a valid fungible token on
-the Neo blockchain.
+The [NEP-17 standard](https://github.com/neo-project/proposals/blob/master/nep-17.mediawiki) defines a set of rules that
+a token contract must follow to be considered a valid fungible token on the Neo blockchain.
 The standard defines methods, events and callbacks that the contract must implement. The NEP-17 standard is the
 equivalent of the ERC-20 standard in Ethereum.
 
@@ -116,11 +116,16 @@ properly. After debugging, you should get a message on the debug console showing
 
 ## 6. Before adding the NEP-17 methods
 
-Neo has some methods that are automatically called by the Virtual Machine, for example, there is the `_deploy` method that is called whenever a contract is deployed or updated, and is often used in all kinds of smart contracts. This can be useful to setup some information on the storage.
+Neo has some methods that are automatically called by the Virtual Machine, for example, there is the `_deploy` method
+that is called whenever a contract is deployed or updated, and is often used in all kinds of smart contracts. This can
+be useful to set up some information on the storage.
 
 ### _deploy
 
-We will be using this method to initialize the contract storage, giving all tokens to the one who deployed the smart contract. To do so, we will be using the `runtime.script_container` object and `Transaction` class to get the script hash of the sender and the `storage.put` method to change the storage, using the deployer script hash as the key and the quantity of tokens as the value.
+We will be using this method to initialize the contract storage, giving all tokens to the one who deployed the smart
+contract. To do so, we will be using the `runtime.script_container` object and `Transaction` class to get the script
+hash of the sender and the `storage.put` method to change the storage, using the deployer script hash as the key and the
+quantity of tokens as the value.
 
 ```python
 # update coin.py adding the following code:
