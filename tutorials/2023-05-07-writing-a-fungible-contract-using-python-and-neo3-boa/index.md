@@ -29,12 +29,12 @@ implementation details. This allows other developers to easily create interopera
 ## 1. Prerequisites
 
 This tutorial assumes that you have [Python 3.7](https://www.python.org/) or any higher version,
-[Visual Studio Code](https://code.visualstudio.com/), and the
-[Python](https://marketplace.visualstudio.com/items?itemName=ms-python.python) and the
-[Neo Blockchain Toolkit](https://marketplace.visualstudio.com/items?itemName=ngd-seattle.neo-blockchain-toolkit)
-extensions installed and properly configured.
+[Visual Studio Code](https://code.visualstudio.com/), the
+[Python VS Code extension](https://marketplace.visualstudio.com/items?itemName=ms-python.python) and the
+[Neo Blockchain Toolkit VS Code extension](https://marketplace.visualstudio.com/items?itemName=ngd-seattle.neo-blockchain-toolkit)
+installed and properly configured.
 
-> To properly configure Neo Blockchain Toolkit you should follow their [quickstart](https://github.com/neo-project/neo-blockchain-toolkit/blob/master/quickstart.md).
+> To properly configure Neo Blockchain Toolkit you should follow their [tutorial](https://developers.neo.org/tutorials/2021/05/27/getting-started-with-the-neo-blockchain-toolkit).
 
 ## 2. Create a virtual environment using VS Code and install Neo3-boa
 
@@ -42,10 +42,12 @@ Create a new folder for your project and open it in VS Code, then create a file 
 `neo3-boa==1.0.0` inside it.
 
 Press `Ctrl+Shift+P` to open the Command Palette and type `Python: Create Environment`, select `Venv`, your Python
-version, the `requirements.txt` file, and press `Ok`, so that the virtual environment can be created.
+version, select the `requirements.txt` file, and press `Ok`, so that the virtual environment can be created.
 
 If you have a Python file open, you can check the lower right corner of VS Code to verify that the virtual environment
 is active, and it's using Python 3.
+
+![Venv active on Python file](./assets/venv-active.png)
 
 ## 3. Create the Coin contract file
 
@@ -78,6 +80,7 @@ neo3-boa compile coin.py --debug
 > terminal instead by clicking on the **⌄** icon on right side of the **+** symbol on the terminal tab and selecting
 > `Command Prompt`. If everything is alright you should see `(.venv)` at the beginning of the terminal line, and then
 > you can execute the code above.
+> ![Activating CMD on Terminal](./assets/terminal-cmd.png)
 
 Be sure to include the `--debug` flag to generate the debug information required by the Neo Blockchain Toolkit.
 
