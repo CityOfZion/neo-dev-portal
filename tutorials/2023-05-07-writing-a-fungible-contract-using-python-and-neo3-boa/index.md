@@ -114,7 +114,36 @@ Next, press `F5` to start debugging. The Neo Blockchain Toolkit will automatical
 Debugging the `totalSupply` method will not be very useful, but it's a good way to test if your environment is working
 properly. After debugging, you should get a message on the debug console showing the GAS consumed and the return value of the method.
 
-## 6. NEP-17 Methods
+## 6. Before adding the NEP-17 methods
+
+Neo has some methods that are automatically called by the Virtual Machine, for example, there is the `_deploy` method that is called whenever a contract is deployed or updated, and is often used in all kinds of smart contracts. This can be useful to setup some information on the storage.
+
+### _deploy
+
+We will be using this method to initialize the contract storage, giving all tokens to the one who deployed the smart contract. To do so, we will be using the `runtime.script_container` object and `Transaction` class to get the script hash of the sender and the `storage.put` method to change the storage, using the deployer script hash as the key and the quantity of tokens as the value.
+
+```python
+# update coin.py adding the following code:
+from boa3.builtin.contract import Nep17TransferEvent
+from boa3.builtin.interop import runtime, storage
+from boa3.builtin.interop.blockchain import Transaction
+
+
+@public
+def _deploy(data: Any, update: bool):
+    # if the contract is being deployed for the first time, add all tokens to the contract deployer
+    if not update:
+        container: Transaction = runtime.script_container
+        storage.put(container.sender, total_supply())
+
+        # trigger the Transfer event to notify that the tokens were minted, check out the `NEP-17 Event` section below for more details
+        Nep17TransferEvent(None, container.sender, total_supply())
+```
+
+Methods that start with an underscore are not callable by the user. In this example, the `_deploy` method is called
+automatically when the contract is deployed.
+
+## 7. NEP-17 Methods
 
 Since Neo's first supported languages were C#, VB.Net, F#, Java, and Kotlin, the naming convention of the Neo standards
 methods is not snake_case. However, Neo3-boa allows you to use snake_case methods as long as you add the `name`
@@ -129,7 +158,7 @@ Returns the token symbol. In this example, we will return the string `COIN`. Sin
 snake_case and camelCase, we don't need to add the `name` parameter.
 
 ```python
-from boa3.builtin.compile_time import public
+# update coin.py adding the following code:
 
 @public(safe=True)
 def symbol() -> str:
@@ -143,7 +172,7 @@ This is used to provide decimal precision when displaying token balances because
 they are often unreliable. In this example, we will return **2**.
 
 ```python
-from boa3.builtin.compile_time import public
+# update coin.py adding the following code:
 
 @public(safe=True)
 def decimals() -> int:
@@ -156,7 +185,7 @@ Returns the total supply of the token. We already implemented this method before
 2 decimals, we need to multiply the supply by 10 ** 2.
 
 ```python
-from boa3.builtin.compile_time import public
+# update coin.py adding the following code:
 
 @public(name='totalSupply', safe=True)
 def total_supply() -> int:
@@ -168,14 +197,13 @@ def total_supply() -> int:
 Returns the balance of a token for a specific address. Every token should be stored and linked to an address in the
 contract storage, and to access the storage we will be using the `storage.get` method.
 
-In this example, let's assume that the key to accessing the number of tokens an address has is just the script hash
+In this smart contract, we made it so that the key to accessing the number of tokens an address has is just the script hash
 of the address (represented by the `UInt160` type).
 
 The `storage.get` method returns a `bytes` value, so we need to convert it to an `int` before returning it.
 
 ```python
-from boa3.builtin.compile_time import public
-from boa3.builtin.interop import storage
+# update coin.py adding the following code:
 from boa3.builtin.type import UInt160, helper as type_helper
 
 @public(name='balanceOf', safe=True)
@@ -194,11 +222,10 @@ We won't be using the data parameter in this example, but it's required by the N
 of peculiarities detailed in the comments in the code below.
 
 ```python
+# update coin.py adding the following code:
+
 from typing import Any
-from boa3.builtin.contract import Nep17TransferEvent
-from boa3.builtin.compile_time import public
-from boa3.builtin.interop import storage, runtime, blockchain, contract
-from boa3.builtin.type import UInt160, helper as type_helper
+from boa3.builtin.interop import blockchain, contract
 
 @public
 def transfer(from_address: UInt160, to_address: UInt160, amount: int, data: Any) -> bool:
@@ -234,13 +261,15 @@ def transfer(from_address: UInt160, to_address: UInt160, amount: int, data: Any)
     return True
 ```
 
-## 7. NEP-17 Event
+## 8. NEP-17 Event
 
 The NEP-17 standard defines a single event called `Transfer` that must be triggered when a transfer occurs.
 You can use the `Nep17TransferEvent` from Neo3-boa or create your own event with `CreateNewEvent`.
 
+In this example, we use this event twice: when minting all the tokens at the deploy and whenever a transfer operation occurs.
+
 ```python
-from boa3.builtin.contract import Nep17TransferEvent
+# update coin.py adding the following code:
 from boa3.builtin.compile_time import CreateNewEvent
 
 on_nep17_transfer = CreateNewEvent(
@@ -259,22 +288,22 @@ Nep17TransferEvent(from_address, to_address, amount)
 on_nep17_transfer(from_address, to_address, amount)
 ```
 
-## 8. NEP-17 Callbacks
+## 9. NEP-17 Callbacks
 
 The NEP-17 standard defines a single callback called `onNEP17Payment` that must be called if the recipient is a contract.
 This callback is used to notify the recipient that it has received tokens. It's up to the recipient to implement this
 callback. The recipient can reject the transfer by raising an exception.
 
 ```python
+# update coin.py adding the following code:
 from boa3.builtin.contract import abort
-from boa3.builtin.compile_time import public
 
 @public(name='onNEP17Payment')
 def on_nep17_payment(from_address: UInt160, amount: int, data: Any):
     abort()     # in this example, the smart contract is rejecting all transfers made to it
 ```
 
-## 9. Manifest Metadata
+## 10. Manifest Metadata
 
 Neo3-boa allows you to define the contract metadata using the `metadata` decorator. This information is used to generate
 the contract manifest file.
@@ -295,58 +324,6 @@ def manifest_metadata() -> NeoMetadata:
     meta.supported_standards = ['NEP-17']
     meta.add_permission(methods=['onNEP17Payment'])
     return meta
-```
-
-## 10. Other important methods
-
-Neo also has other methods that are not part of the NEP-17 standard but are often used in token contracts. Such as
-`_deploy` and `verify`.
-
-### _deploy
-
-We could improve the contract by adding a `_deploy` callback to initialize the contract storage when the contract is
-deployed. This is often used to set the contract owner.
-
-In this example, we will be using it to give all tokens to the contract deployer and to also save on the storage who is
-the contract deployer.
-
-```python
-from boa3.builtin.compile_time import public
-from boa3.builtin.contract import Nep17TransferEvent
-from boa3.builtin.interop import runtime, storage
-from boa3.builtin.interop.blockchain import Transaction
-
-
-@public
-def _deploy(data: Any, update: bool):
-    # if the contract is being deployed for the first time, add all tokens to the contract deployer
-    if not update:
-        container: Transaction = runtime.script_container
-        storage.put(container.sender, total_supply())
-        storage.put(b'deployer', container.sender)
-
-        # trigger the Transfer event to notify that the tokens were minted, since this is a mint the `from` parameter must be None
-        Nep17TransferEvent(None, container.sender, total_supply())
-```
-
-Methods that start with an underscore are not callable by the user. In this example, the `_deploy` method is called
-automatically when the contract is deployed.
-
-### verify
-
-When the `check_witness` method is called passing a smart contract hash as a parameter, the Neo VM will automatically
-invoke the `verify` method of said smart contract. This method is used to guarantee that the contract is allowed to
-spend the tokens.
-
-The `verify` method can be implemented as follows:
-
-```python
-from boa3.builtin.interop import runtime
-
-@public
-def verify() -> bool:
-    # we are assuming that the contract deployer was stored when the contract was first deployed
-    return runtime.check_witness(storage.get(b'deployer'))
 ```
 
 ## 11. Other examples
