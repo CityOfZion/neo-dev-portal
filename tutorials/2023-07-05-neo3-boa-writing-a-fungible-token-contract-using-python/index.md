@@ -333,9 +333,9 @@ def manifest_metadata() -> NeoMetadata:
 
 ## 11. Other examples
 
-Check out this [simple NEP-17](https://github.com/CityOfZion/neo3-boa/blob/master/boa3_test/examples/simple_nep17.py)
+Check out this [simple NEP-17](https://github.com/CityOfZion/neo3-boa/blob/v1.0.0/boa3_test/examples/simple_nep17.py)
 example to see a smart contract that is as simple as the one in this example, but is more cohesive and uses some more
 features in its implementation.
 
-Also, check out this [more complex NEP-17](https://github.com/CityOfZion/neo3-boa/blob/master/boa3_test/examples/nep17.py)
+Also, check out this [more complex NEP-17](https://github.com/CityOfZion/neo3-boa/blob/v1.0.0/boa3_test/examples/nep17.py)
 example to examine a smart contract that can also mint and burn tokens.
