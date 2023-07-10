@@ -62,11 +62,6 @@ def total_supply() -> int:
     return 10 ** 8
 ```
 
-The `public` decorator indicates that the method is callable by other smart contracts or users on the blockchain. While
-the `safe` parameter indicates that there will be no change on the contract storage and the `name` parameter is used to
-define how this method will be called, in this particular case we are using it to comply to the NEP-17 standard while
-also having a more pythonic code.
-
 ## 4. Compiling the contract
 
 Open the VS Code terminal and run the following command to compile the contract:
@@ -114,7 +109,7 @@ Next, press `F5` to start debugging. The Neo Blockchain Toolkit will automatical
 Debugging the `totalSupply` method will not be very useful, but it's a good way to test if your environment is working
 properly. After debugging, you should get a message on the debug console showing the GAS consumed and the return value of the method.
 
-## 6. Before adding the NEP-17 methods
+## 6. Contract Initialization
 
 Neo has some methods that are automatically called by the Virtual Machine, for example, there is the `_deploy` method
 that is called whenever a contract is deployed or updated, and is often used in all kinds of smart contracts. This can
@@ -123,9 +118,10 @@ be useful to set up some information on the storage.
 ### _deploy
 
 We will be using this method to initialize the contract storage, giving all tokens to the one who deployed the smart
-contract. To do so, we will be using the `runtime.script_container` object and `Transaction` class to get the script
-hash of the sender and the `storage.put` method to change the storage, using the deployer script hash as the key and the
-quantity of tokens as the value.
+contract. To do so, we will be using the `runtime.script_container` to get the script hash of the sender.
+
+Then, save the sender as the owner of the whole total supply on the storage with the `storage.put` method. Our strategy
+is to have the owner as the key and the quantity of tokens they own as the value of the storage.
 
 ```python
 # update coin.py adding the following code:
@@ -150,17 +146,11 @@ automatically when the contract is deployed.
 
 ## 7. NEP-17 Methods
 
-Since Neo's first supported languages were C#, VB.Net, F#, Java, and Kotlin, the naming convention of the Neo standards
-methods is not snake_case. However, Neo3-boa allows you to use snake_case methods as long as you add the `name`
-parameter to the `public` decorator when necessary. You'll also need to add the `safe=True` parameter on read-only
-methods to indicate that the method won't change the contract storage and can be safely called by other contracts.
-
 The NEP-17 standard defines 5 mandatory methods that a token contract must implement:
 
 ### symbol
 
-Returns the token symbol. In this example, we will return the string `COIN`. Since the string `symbol` is the same on
-snake_case and camelCase, we don't need to add the `name` parameter.
+Returns the token symbol. In this example, we will return the string `COIN`.
 
 ```python
 # update coin.py adding the following code:
@@ -169,6 +159,10 @@ snake_case and camelCase, we don't need to add the `name` parameter.
 def symbol() -> str:
     return "COIN"
 ```
+
+When writting methods that will be used by other contracts or users, you need to use the `public` decorator.
+The `safe` parameter indicates that when calling the method it won't change the contract storage and can be safely
+called by other contracts or users.
 
 ### decimals
 
@@ -196,6 +190,10 @@ Returns the total supply of the token. We already implemented this method before
 def total_supply() -> int:
     return (10 ** 8) * 10 ** decimals()
 ```
+
+The `name` parameter is used to define how this method will be called. Since Neo's first supported languages were C#, VB.Net, F#,
+Java, and Kotlin, the naming convention of the Neo standards methods is not snake_case. However, Neo3-boa allows you to write a
+more pythonic code with snake_case methods as long as you add the `name` parameter to the `public` decorator when necessary.
 
 ### balanceOf
 
@@ -266,6 +264,8 @@ def transfer(from_address: UInt160, to_address: UInt160, amount: int, data: Any)
     return True
 ```
 
+Since the `transfer` method changes values on the storage, it can not be flagged as `safe`.
+
 ## 8. NEP-17 Event
 
 The NEP-17 standard defines a single event called `Transfer` that must be triggered when a transfer occurs.
@@ -316,8 +316,6 @@ the contract manifest file.
 In our example, we will define the contract name and the supported standards, but you can add any information you want
 to. We are also adding permissions to allow our contract to call the `onNEP17Payment` method. The compiler automatically
 does this step, but it's a good practice to define the permissions in the contract code.
-
-> You should add this method at the beginning of your file, before any other method.
 
 ```python
 from boa3.builtin.compile_time import metadata, NeoMetadata
